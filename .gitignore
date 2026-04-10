@@ -9,3 +9,4 @@ instance/*.sqlite
 instance/*.sqlite3
 .omx/
 tmp/
+.vercel
