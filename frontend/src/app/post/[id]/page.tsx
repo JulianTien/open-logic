@@ -1,7 +1,7 @@
 import { AppShell } from "@/components/app-shell";
 import { PostDetailView } from "@/components/post-detail-view";
 import { getCurrentUser } from "@/lib/auth";
-import { backendBaseUrl } from "@/lib/config";
+import { getAppOrigin } from "@/lib/app-origin";
 import { getLocale, translate } from "@/lib/i18n";
 
 type PostPayload = {
@@ -35,7 +35,8 @@ export default async function PostDetailPage({ params }: Props) {
   let initialPost: PostPayload["data"] | null = null;
 
   try {
-    const response = await fetch(`${backendBaseUrl}/api/posts/${id}`, {
+    const appOrigin = await getAppOrigin();
+    const response = await fetch(`${appOrigin}/api/posts/${id}`, {
       cache: "no-store",
     });
     if (response.ok) {

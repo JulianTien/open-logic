@@ -2,7 +2,7 @@ import { AppShell } from "@/components/app-shell";
 import { ProfileView } from "@/components/profile-view";
 import { getCurrentUser } from "@/lib/auth";
 import { getLocale, translate } from "@/lib/i18n";
-import { headers } from "next/headers";
+import { getAppOrigin } from "@/lib/app-origin";
 
 type Post = {
   id: number;
@@ -15,11 +15,8 @@ type Post = {
 };
 
 async function getPosts(userId: number): Promise<Post[]> {
-  const headerStore = await headers();
-  const host = headerStore.get("x-forwarded-host") || headerStore.get("host");
-  const protocol = headerStore.get("x-forwarded-proto") || "http";
-  const baseUrl = `${protocol}://${host}`;
-  const response = await fetch(`${baseUrl}/api/posts?user_id=${userId}`, {
+  const appOrigin = await getAppOrigin();
+  const response = await fetch(`${appOrigin}/api/posts?user_id=${userId}`, {
     cache: "no-store",
   });
   if (!response.ok) return [];
