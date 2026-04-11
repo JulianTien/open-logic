@@ -65,7 +65,7 @@ export function CoursesView({ copy }: CoursesViewProps) {
     };
   }, [copy.failed, copy.loading, lesson, track]);
 
-  function switchTrack(nextTrack: string) {
+function switchTrack(nextTrack: string) {
     setTrack(nextTrack);
     setLesson(1);
     setOutput(copy.placeholder);
@@ -97,6 +97,16 @@ export function CoursesView({ copy }: CoursesViewProps) {
     }
   }
 
+  function renderMarkdown(input: string): string {
+    return input
+      .replace(/^### (.*)$/gm, "<h3>$1</h3>")
+      .replace(/^## (.*)$/gm, "<h2>$1</h2>")
+      .replace(/^# (.*)$/gm, "<h1>$1</h1>")
+      .replace(/```([\s\S]*?)```/g, "<pre><code>$1</code></pre>")
+      .replace(/`([^`]+)`/g, "<code>$1</code>")
+      .replace(/\n/g, "<br />");
+  }
+
   return (
     <div className="content-grid">
       <article className="page-card">
@@ -113,7 +123,10 @@ export function CoursesView({ copy }: CoursesViewProps) {
             {copy.vibe}
           </button>
         </div>
-        <pre className="markdown-block">{content}</pre>
+        <div
+          className="markdown-block"
+          dangerouslySetInnerHTML={{ __html: renderMarkdown(content) }}
+        />
         <div className="hero-actions">
           <button
             className="btn btn-secondary"

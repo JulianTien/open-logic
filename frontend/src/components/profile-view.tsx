@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 type User = {
   id: number;
   username: string;
@@ -34,12 +36,17 @@ type ProfileViewProps = {
 };
 
 export function ProfileView({ currentUser, posts, copy }: ProfileViewProps) {
+  const [items, setItems] = useState(posts);
   const joinedText = !currentUser?.created_at
     ? copy.joinedOn.replace("{date}", "--")
     : copy.joinedOn.replace(
         "{date}",
         new Date(currentUser.created_at).toLocaleDateString(),
       );
+
+  useEffect(() => {
+    setItems(posts);
+  }, [posts]);
 
   if (!currentUser) {
     return (
@@ -60,7 +67,7 @@ export function ProfileView({ currentUser, posts, copy }: ProfileViewProps) {
           {posts.length === 0 ? (
             <p>{copy.empty}</p>
           ) : (
-            posts.map((post) => (
+            items.map((post) => (
               <a className="panel" href={`/post/${post.id}`} key={post.id}>
                 <strong>{post.title}</strong>
                 <p className="lead">{post.created_at}</p>
@@ -73,6 +80,21 @@ export function ProfileView({ currentUser, posts, copy }: ProfileViewProps) {
                   </span>
                   {post.has_ai ? <span className="chip">AI</span> : null}
                 </div>
+                <button
+                  className="btn btn-ghost"
+                  onClick={async (event) => {
+                    event.preventDefault();
+                    const response = await fetch(`/api/posts/${post.id}`, {
+                      method: "DELETE",
+                    });
+                    if (response.ok) {
+                      setItems((value) => value.filter((item) => item.id !== post.id));
+                    }
+                  }}
+                  type="button"
+                >
+                  Delete
+                </button>
               </a>
             ))
           )}
@@ -90,7 +112,7 @@ export function ProfileView({ currentUser, posts, copy }: ProfileViewProps) {
 
         <div className="chip-row">
           <span className="chip">
-            {copy.posts}: {posts.length}
+            {copy.posts}: {items.length}
           </span>
           <span className="chip">{copy.points}: 0</span>
         </div>

@@ -8,6 +8,53 @@ from config import DevelopmentConfig, ProductionConfig
 from extensions import db, migrate, cors
 from routes import auth_bp, posts_bp, comments_bp, runner_bp, courses_bp
 from translations import SUPPORTED_UI_LOCALES, get_messages, translate
+from models import User, Post, Comment
+
+
+def bootstrap_sqlite_demo_data(app):
+    database_url = app.config.get("SQLALCHEMY_DATABASE_URI") or ""
+    if not database_url.startswith("sqlite"):
+        return
+
+    with app.app_context():
+        db.create_all()
+
+        demo_user = User.query.filter_by(username="demo").first()
+        if not demo_user:
+            demo_user = User(username="demo")
+            demo_user.set_password("demo-password")
+            db.session.add(demo_user)
+            db.session.flush()
+
+        if not Post.query.first():
+            demo_post = Post(
+                title="How do I start learning Python loops?",
+                content=(
+                    "# Context\n"
+                    "I can print text and use variables, but I get confused when I see `for` and `while`.\n\n"
+                    "# What I tried\n"
+                    "I copied a few examples, but I still do not understand when the loop stops.\n\n"
+                    "# Expected help\n"
+                    "I want a beginner-friendly explanation and one small example."
+                ),
+                user_id=demo_user.id,
+            )
+            demo_post.tags = ["Python"]
+            db.session.add(demo_post)
+            db.session.flush()
+
+            ai_comment = Comment(
+                content=(
+                    "Start with `for` when you already know how many items you want to visit. "
+                    "Use `while` when you want to keep going until a condition becomes false."
+                ),
+                is_ai=True,
+                post_id=demo_post.id,
+                user_id=demo_user.id,
+            )
+            db.session.add(ai_comment)
+
+        db.session.commit()
 
 def create_app(config_class=None):
     if config_class is None:
@@ -22,6 +69,7 @@ def create_app(config_class=None):
     db.init_app(app)
     migrate.init_app(app, db)
     cors.init_app(app)
+    bootstrap_sqlite_demo_data(app)
 
     # Register Blueprints
     app.register_blueprint(auth_bp)
