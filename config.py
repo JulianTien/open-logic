@@ -1,8 +1,18 @@
 import os
 
+
+def _parse_allowed_origins():
+    raw = os.environ.get("CORS_ALLOWED_ORIGINS", "").strip()
+    if not raw:
+        return []
+    return [origin.strip() for origin in raw.split(",") if origin.strip()]
+
+
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    CORS_ALLOWED_ORIGINS = _parse_allowed_origins()
+    CORS_SUPPORTS_CREDENTIALS = bool(CORS_ALLOWED_ORIGINS)
 
     @staticmethod
     def validate():

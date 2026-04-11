@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, request, redirect, make_response
+from flask import Flask, jsonify, render_template, request, redirect, make_response
 from dotenv import load_dotenv
 
 load_dotenv() # Load .env file
@@ -56,7 +56,19 @@ def bootstrap_sqlite_demo_data(app):
 
         db.session.commit()
 
-def create_app(config_class=None):
+def configure_cors(app):
+    origins = app.config.get("CORS_ALLOWED_ORIGINS") or []
+    if origins:
+        cors.init_app(
+            app,
+            origins=origins,
+            supports_credentials=app.config.get("CORS_SUPPORTS_CREDENTIALS", False),
+        )
+    else:
+        cors.init_app(app)
+
+
+def create_app(config_class=None, api_only=False):
     if config_class is None:
         config_name = os.environ.get('FLASK_CONFIG', 'production').lower()
         config_class = ProductionConfig if config_name == 'production' else DevelopmentConfig
@@ -68,7 +80,7 @@ def create_app(config_class=None):
     # Initialize Extensions
     db.init_app(app)
     migrate.init_app(app, db)
-    cors.init_app(app)
+    configure_cors(app)
     bootstrap_sqlite_demo_data(app)
 
     # Register Blueprints
@@ -77,6 +89,17 @@ def create_app(config_class=None):
     app.register_blueprint(comments_bp)
     app.register_blueprint(runner_bp)
     app.register_blueprint(courses_bp)
+
+    @app.route('/api/health')
+    def health_check():
+        return jsonify({
+            'code': 200,
+            'status': 'ok',
+            'mode': 'api' if api_only else 'full',
+        })
+
+    if api_only:
+        return app
 
     def resolve_ui_locale():
         locale = request.cookies.get('ui_locale', 'en')
