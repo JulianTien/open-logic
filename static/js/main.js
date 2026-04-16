@@ -1,39 +1,58 @@
 // Main.js - Global Logic
 
 document.addEventListener('DOMContentLoaded', () => {
-    checkAuthState();
+    void checkAuthState();
     setupNavbar();
 });
 
-function checkAuthState() {
-    // For MVP prototype, we might just check separate cookies or localStorage
-    // This logic connects with the backend API later.
-    // Here is a mock implementation for UI testing:
-    
-    const userJson = localStorage.getItem('osi_user');
+async function checkAuthState() {
     const authButtons = document.getElementById('auth-buttons');
     const userProfile = document.getElementById('user-profile');
     const navAvatar = document.getElementById('navAvatar');
+    const logoutBtn = document.getElementById('logoutBtn');
 
-    if (userJson) {
-        const user = JSON.parse(userJson);
+    const setAnonymous = () => {
+        if (authButtons) authButtons.style.display = 'flex';
+        if (userProfile) userProfile.style.display = 'none';
+    };
+
+    try {
+        const response = await fetch('/api/auth/me', {
+            credentials: 'same-origin',
+            cache: 'no-store',
+        });
+
+        if (!response.ok) {
+            localStorage.removeItem('osi_user');
+            setAnonymous();
+            return;
+        }
+
+        const result = await response.json();
+        const user = result.data;
+        localStorage.setItem('osi_user', JSON.stringify(user));
         if (authButtons) authButtons.style.display = 'none';
         if (userProfile) {
             userProfile.style.display = 'flex';
             navAvatar.textContent = user.username[0].toUpperCase();
         }
-    } else {
-        if (authButtons) authButtons.style.display = 'flex'; // Default flex
-        if (userProfile) userProfile.style.display = 'none';
+    } catch (error) {
+        console.error('Failed to hydrate auth state:', error);
+        setAnonymous();
     }
 
-    // Logout Handler
-    const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
-        logoutBtn.addEventListener('click', (e) => {
+        logoutBtn.addEventListener('click', async (e) => {
             e.preventDefault();
+            try {
+                await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                });
+            } catch (error) {
+                console.error('Logout request failed:', error);
+            }
             localStorage.removeItem('osi_user');
-            // Also call backend logout API
             window.location.reload();
         });
     }

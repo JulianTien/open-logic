@@ -45,21 +45,10 @@ document.getElementById('postForm').addEventListener('submit', async function (e
         submitBtn.dataset.defaultLabel = originalText;
         submitBtn.innerText = t('create.publish_loading');
 
-        let token = '';
-        const userJsonStr = localStorage.getItem('osi_user');
-        if (userJsonStr) {
-            try {
-                const user = JSON.parse(userJsonStr);
-                token = user.token || ''; // Attempt to grab token if it exists
-            } catch (e) {}
-        }
-
-        const headers = { 'Content-Type': 'application/json' };
-        if (token) headers['Authorization'] = `Bearer ${token}`;
-
         const response = await fetch('/api/posts', {
             method: 'POST',
-            headers: headers,
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
             body: JSON.stringify({ title, content, tags })
         });
 
