@@ -1,13 +1,45 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, current_app, request, jsonify
 from services.sandbox import execute_python, execute_c
 import uuid
 import time
 
 runner_bp = Blueprint('runner_bp', __name__)
 
+
+def _runner_auth_failed():
+    return jsonify({
+        'error': 'Unauthorized runner invocation',
+    }), 401
+
+
+def _verify_runner_request():
+    required_token = (current_app.config.get('RUNNER_AUTH_TOKEN') or '').strip()
+    if not required_token:
+        return None
+
+    provided = request.headers.get('x-runner-token', '').strip()
+    if provided != required_token:
+        return _runner_auth_failed()
+    return None
+
+
+@runner_bp.route('/api/runner/health', methods=['GET'])
+@runner_bp.route('/runner/health', methods=['GET'])
+def runner_health():
+    return jsonify({
+        'code': 200,
+        'status': 'ok',
+        'service': 'runner',
+        'auth_required': bool((current_app.config.get('RUNNER_AUTH_TOKEN') or '').strip()),
+    })
+
 @runner_bp.route('/api/run', methods=['POST'])
 @runner_bp.route('/runner/execute', methods=['POST']) # Support both legacy and new Enterprise proxy path
 def run_code():
+    auth_error = _verify_runner_request()
+    if auth_error:
+        return auth_error
+
     data = request.get_json()
     if not data or 'code' not in data or 'language' not in data:
         return jsonify({'error': 'Missing code or language parameters'}), 400

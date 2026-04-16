@@ -13,6 +13,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     CORS_ALLOWED_ORIGINS = _parse_allowed_origins()
     CORS_SUPPORTS_CREDENTIALS = bool(CORS_ALLOWED_ORIGINS)
+    RUNNER_AUTH_TOKEN = os.environ.get('RUNNER_AUTH_TOKEN', '').strip()
 
     @staticmethod
     def validate():
