@@ -3,8 +3,12 @@ import subprocess
 import tempfile
 import time
 import json
-import resource
 import shutil
+
+try:
+    import resource
+except ImportError:  # Windows does not provide the POSIX resource module.
+    resource = None
 
 # SCF Sandbox constraints
 MAX_MEMORY_KB = 256 * 1024 # 256MB
@@ -13,6 +17,8 @@ MAX_WALL_TIME_SECONDS = 3
 
 def limit_resources():
     """Set resource limits for child processes using resource.setrlimit"""
+    if resource is None:
+        return
     try:
         # Limit CPU time
         resource.setrlimit(resource.RLIMIT_CPU, (MAX_CPU_TIME_SECONDS, MAX_CPU_TIME_SECONDS + 1))
