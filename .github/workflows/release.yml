@@ -10,7 +10,7 @@ jobs:
   package-backend:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Package backend
         run: tar -czf open-logic-backend.tar.gz backend
       - name: Upload artifact
